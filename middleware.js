@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import { verifyGateCookieValue, GATE_COOKIE_NAME } from './lib/gate';
 
