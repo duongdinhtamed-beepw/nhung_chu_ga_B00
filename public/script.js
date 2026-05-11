@@ -1,37 +1,18 @@
 // ===== Data =====
+// Flashcard data will be loaded from database/API
+// All fake/demo data has been removed
 const flashcardsData = {
-    math: [
-        { front: "Công thức đạo hàm của hàm số lũy thừa?", back: "(x^n)' = n.x^(n-1)" },
-        { front: "Công thức đạo hàm hàm số sin(x)?", back: "sin'(x) = cos(x)" },
-        { front: "Công thức tích phân từ a đến b?", back: "∫[a→b] f(x)dx = F(b) - F(a)" },
-        { front: "Phương trình đường thẳng trong không gian?", back: "(x-x₀)/a = (y-y₀)/b = (z-z₀)/c" },
-        { front: "Công thức khoảng cách từ điểm đến mặt phẳng?", back: "d = |Ax₀ + By₀ + Cz₀ + D| / √(A²+B²+C²)" },
-        { front: "Xác suất của biến cố A?", back: "P(A) = n(A) / n(Ω)" }
-    ],
-    chemistry: [
-        { front: "Este nào tác dụng với NaOH tạo muối và ancol?", back: "Este no, đơn chức, mạch hở" },
-        { front: "Công thức tính khối lượng kết tủ trong phản ứng hấp thụ CO₂?", back: "m↓ = mCO₂ + mdd NaOH - mdd sau phản ứng" },
-        { front: "Kim loại nào dẫn điện tốt nhất?", back: "Bạc (Ag)" },
-        { front: "Công thức tính số mol theo nồng độ mol?", back: "n = CM . V (lít)" },
-        { front: "Chất nào làm mất màu nước brom ở điều kiện thường?", back: "Ankene, Ankin, Phenol" },
-        { front: "Công thức tính nhanh số đồng phân amin?", back: "Số đồng phân = 2^(n-1) với n ≤ 4" }
-    ],
-    biology: [
-        { front: "Quang hợp xảy ra ở bào quan nào?", back: "Lục lạp (chloroplast)" },
-        { front: "ADN được cấu tạo theo nguyên tắc nào?", back: "Nguyên tắc bổ sung và nguyên tắc bán bảo toàn" },
-        { front: "Quy luật phân ly độc lập của Menđen?", back: "Các cặp gen phân ly độc lập trong giảm phân" },
-        { front: "Hô hấp tế bào diễn ra ở đâu?", back: "Ti thể (mitochondria)" },
-        { front: "Quần thể sinh vật được đặc trưng bởi yếu tố nào?", back: "Mật độ, tuổi thọ, tỉ lệ giới tính" },
-        { front: "Sinh thái học nghiên cứu gì?", back: "Mối quan hệ giữa sinh vật và môi trường" }
-    ]
+    math: [],
+    chemistry: [],
+    biology: []
 };
 
 // ===== State =====
 let currentSubject = 'math';
 let currentCardIndex = 0;
 let countdownDate = new Date();
-countdownDate.setMonth(5); // June
-countdownDate.setDate(26); // Day 26
+// Set countdown date to 6 months from today (can be updated by admin)
+countdownDate.setMonth(countdownDate.getMonth() + 6);
 if (countdownDate < new Date()) {
     countdownDate.setFullYear(countdownDate.getFullYear() + 1);
 }
@@ -184,8 +165,17 @@ function animateProgressBars() {
 // ===== Flashcards =====
 function updateFlashcard() {
     const cards = flashcardsData[currentSubject];
-    const card = cards[currentCardIndex];
     
+    // Handle empty flashcards
+    if (!cards || cards.length === 0) {
+        cardTag.textContent = 'Không có flashcard';
+        cardFront.textContent = 'Chưa có dữ liệu flashcard cho môn học này';
+        cardBack.textContent = 'Vui lòng quay lại sau';
+        cardCounter.textContent = '0 / 0';
+        return;
+    }
+    
+    const card = cards[currentCardIndex];
     flashcard.classList.remove('flipped');
     
     setTimeout(() => {
@@ -209,14 +199,18 @@ flashcardSubject.addEventListener('change', (e) => {
 
 prevCard.addEventListener('click', () => {
     const cards = flashcardsData[currentSubject];
-    currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
-    updateFlashcard();
+    if (cards && cards.length > 0) {
+        currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+        updateFlashcard();
+    }
 });
 
 nextCard.addEventListener('click', () => {
     const cards = flashcardsData[currentSubject];
-    currentCardIndex = (currentCardIndex + 1) % cards.length;
-    updateFlashcard();
+    if (cards && cards.length > 0) {
+        currentCardIndex = (currentCardIndex + 1) % cards.length;
+        updateFlashcard();
+    }
 });
 
 // ===== Schedule Tabs =====
@@ -263,12 +257,13 @@ const observer = new IntersectionObserver((entries) => {
             if (entry.target.classList.contains('progress-fill')) {
                 animateProgressBars();
             }
-            if (entry.target === studyHoursEl) {
-                animateCounter(studyHoursEl, 128);
-            }
-            if (entry.target === streakDaysEl) {
-                animateCounter(streakDaysEl, 15);
-            }
+            // Fake data removed - animateCounter calls commented
+            // if (entry.target === studyHoursEl) {
+            //     animateCounter(studyHoursEl, 128);
+            // }
+            // if (entry.target === streakDaysEl) {
+            //     animateCounter(streakDaysEl, 15);
+            // }
         }
     });
 }, observerOptions);
