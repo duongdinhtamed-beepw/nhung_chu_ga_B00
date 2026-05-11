@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https: blob:; worker-src 'self' blob:;">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <title>B00 Study Hub - Ôn Thi Toán - Hóa - Sinh</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Auth guard: runs before rendering any content -->
+    <script src="security.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Block page if not logged in (runs immediately)
+        (async function authGuard() {
+            const session = await AuthModule.verifySession();
+            if (!session) {
+                document.documentElement.style.display = 'none';
+                location.replace('login.html');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>B00 Hub</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Tổng quan</span>
+                </a>
+                <a href="#subjects" class="nav-item" data-section="subjects">
+                    <i class="fas fa-book"></i>
+                    <span>Môn học</span>
+                </a>
+                <a href="#flashcards" class="nav-item" data-section="flashcards">
+                    <i class="fas fa-clone"></i>
+                    <span>Flashcards</span>
+                </a>
+                <a href="#schedule" class="nav-item" data-section="schedule">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Lịch học</span>
+                </a>
+                <a href="#goals" class="nav-item" data-section="goals">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Mục tiêu</span>
+                </a>
+                <div class="nav-separator"></div>
+                <a href="#upload" class="nav-item" data-section="upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Upload đề</span>
+                </a>
+                <a href="#repo" class="nav-item" data-section="repo">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Kho đề</span>
+                </a>
+                <a href="#bank" class="nav-item" data-section="bank">
+                    <i class="fas fa-database"></i>
+                    <span>Ngân hàng câu hỏi</span>
+                </a>
+                <a href="#chatbot" class="nav-item" data-section="chatbot">
+                    <i class="fas fa-robot"></i>
+                    <span>Trợ lý AI</span>
+                </a>
+                <a href="#generate" class="nav-item" data-section="generate">
+                    <i class="fas fa-magic"></i>
+                    <span>Tạo đề</span>
+                </a>
+                <a href="#weakness" class="nav-item" data-section="weakness">
+                    <i class="fas fa-brain"></i>
+                    <span>Điểm yếu của tôi</span>
+                </a>
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                    <span>Chế độ tối</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm bài học, công thức...">
+                </div>
+                <div class="user-info">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-menu">
+                        <div class="user-avatar" id="userAvatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name" id="userName">-</div>
+                                <div class="user-dropdown-role" id="userRole">-</div>
+                            </div>
+                            <button class="user-dropdown-item" id="btnLogout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-wrapper">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <div class="section-header">
+                        <h1>Chào mừng trở lại, Học sinh B00!</h1>
+                        <p>Hãy cùng chinh phục tổ hợp Toán - Hóa - Sinh</p>
+                    </div>
+
+                    <!-- Countdown -->
+                    <div class="countdown-card">
+                        <div class="countdown-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="countdown-content">
+                            <h2>Đếm ngược đến kỳ thi THPT Quốc gia</h2>
+                            <div class="countdown-timer" id="countdownTimer">
+                                <div class="time-unit">
+                                    <span class="time-value" id="days">00</span>
+                                    <span class="time-label">Ngày</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-value" id="hours">00</span>
+                                    <span class="time-label">Giờ</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-value" id="minutes">00</span>
+                                    <span class="time-label">Phút</span>
+                                </div>
+                                <div class="time-separator">:</div>
+                                <div class="time-unit">
+                                    <span class="time-value" id="seconds">00</span>
+                                    <span class="time-label">Giây</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subject Cards -->
+                    <div class="subject-grid">
+                        <div class="subject-card math">
+                            <div class="subject-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="subject-info">
+                                <h3>Toán học</h3>
+                                <p>Giải tích, Hình học, Đại số</p>
+                            </div>
+                            <div class="subject-progress">
+                                <div class="progress-ring" data-progress="65">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bg"/>
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bar" stroke-dasharray="283" stroke-dashoffset="283"/>
+                                    </svg>
+                                    <span class="progress-text">65%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="subject-card chemistry">
+                            <div class="subject-icon">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <div class="subject-info">
+                                <h3>Hóa học</h3>
+                                <p>Vô cơ, Hữu cơ, Phân tích</p>
+                            </div>
+                            <div class="subject-progress">
+                                <div class="progress-ring" data-progress="48">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bg"/>
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bar" stroke-dasharray="283" stroke-dashoffset="283"/>
+                                    </svg>
+                                    <span class="progress-text">48%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="subject-card biology">
+                            <div class="subject-icon">
+                                <i class="fas fa-dna"></i>
+                            </div>
+                            <div class="subject-info">
+                                <h3>Sinh học</h3>
+                                <p>Tế bào, Di truyền, Sinh thái</p>
+                            </div>
+                            <div class="subject-progress">
+                                <div class="progress-ring" data-progress="72">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bg"/>
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" class="progress-bar" stroke-dasharray="283" stroke-dashoffset="283"/>
+                                    </svg>
+                                    <span class="progress-text">72%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="studyHours">128</span>
+                                <span class="stat-label">Giờ đã học</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value">342</span>
+                                <span class="stat-label">Bài đã làm</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="streakDays">15</span>
+                                <span class="stat-label">Ngày streak</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value">8.4</span>
+                                <span class="stat-label">Điểm TB</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Subjects Section -->
+                <section id="subjects" class="section">
+                    <div class="section-header">
+                        <h1>Môn học</h1>
+                        <p>Quản lý tiến độ ôn tập từng môn</p>
+                    </div>
+
+                    <div class="subject-detail-grid">
+                        <div class="subject-detail-card math">
+                            <div class="detail-header">
+                                <div class="detail-icon"><i class="fas fa-calculator"></i></div>
+                                <h2>Toán học</h2>
+                            </div>
+                            <div class="topic-list">
+                                <div class="topic-item">
+                                    <span class="topic-name">Hàm số và ứng dụng đạo hàm</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 85%"></div></div>
+                                        <span>85%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Hình học giải tích</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 60%"></div></div>
+                                        <span>60%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Số phức</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 90%"></div></div>
+                                        <span>90%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Tích phân</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 45%"></div></div>
+                                        <span>45%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Xác suất thống kê</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 30%"></div></div>
+                                        <span>30%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="subject-detail-card chemistry">
+                            <div class="detail-header">
+                                <div class="detail-icon"><i class="fas fa-flask"></i></div>
+                                <h2>Hóa học</h2>
+                            </div>
+                            <div class="topic-list">
+                                <div class="topic-item">
+                                    <span class="topic-name">Este - Lipit</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 70%"></div></div>
+                                        <span>70%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Cacbohidrat</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 55%"></div></div>
+                                        <span>55%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Amin - Amino axit - Protein</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 40%"></div></div>
+                                        <span>40%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Polime</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 35%"></div></div>
+                                        <span>35%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Điện phân - Nhiệt phân</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 50%"></div></div>
+                                        <span>50%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="subject-detail-card biology">
+                            <div class="detail-header">
+                                <div class="detail-icon"><i class="fas fa-dna"></i></div>
+                                <h2>Sinh học</h2>
+                            </div>
+                            <div class="topic-list">
+                                <div class="topic-item">
+                                    <span class="topic-name">Trao đổi chất và năng lượng</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 80%"></div></div>
+                                        <span>80%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Cảm ứng sinh trưởng</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 65%"></div></div>
+                                        <span>65%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Di truyền học</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 75%"></div></div>
+                                        <span>75%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Sinh thái học</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 60%"></div></div>
+                                        <span>60%</span>
+                                    </div>
+                                </div>
+                                <div class="topic-item">
+                                    <span class="topic-name">Tiến hóa</span>
+                                    <div class="topic-progress">
+                                        <div class="progress-bar-linear"><div class="progress-fill" style="width: 90%"></div></div>
+                                        <span>90%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Flashcards Section -->
+                <section id="flashcards" class="section">
+                    <div class="section-header">
+                        <h1>Flashcards</h1>
+                        <p>Học công thức và khái niệm qua thẻ ghi nhớ</p>
+                    </div>
+
+                    <div class="flashcard-controls">
+                        <select id="flashcardSubject">
+                            <option value="math">Toán học</option>
+                            <option value="chemistry">Hóa học</option>
+                            <option value="biology">Sinh học</option>
+                        </select>
+                        <div class="flashcard-nav">
+                            <button id="prevCard"><i class="fas fa-chevron-left"></i></button>
+                            <span id="cardCounter">1 / 6</span>
+                            <button id="nextCard"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="flashcard-container" id="flashcardContainer">
+                        <div class="flashcard" id="flashcard">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <span class="card-tag" id="cardTag">Toán học</span>
+                                    <h3 id="cardFront">Công thức đạo hàm của hàm số lũy thừa?</h3>
+                                    <p class="flip-hint">Nhấp để lật thẻ</p>
+                                </div>
+                                <div class="flashcard-back">
+                                    <span class="card-tag" id="cardTagBack">Đáp án</span>
+                                    <p id="cardBack">(x^n)' = n.x^(n-1)</p>
+                                    <p class="flip-hint">Nhấp để lật lại</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Schedule Section -->
+                <section id="schedule" class="section">
+                    <div class="section-header">
+                        <h1>Lịch học tập</h1>
+                        <p>Lên kế hoạch ôn tập hàng tuần</p>
+                    </div>
+
+                    <div class="schedule-container">
+                        <div class="week-days">
+                            <button class="day-tab active" data-day="mon">T2</button>
+                            <button class="day-tab" data-day="tue">T3</button>
+                            <button class="day-tab" data-day="wed">T4</button>
+                            <button class="day-tab" data-day="thu">T5</button>
+                            <button class="day-tab" data-day="fri">T6</button>
+                            <button class="day-tab" data-day="sat">T7</button>
+                            <button class="day-tab" data-day="sun">CN</button>
+                        </div>
+                        <div class="schedule-content" id="scheduleContent">
+                            <div class="schedule-day active" data-day="mon">
+                                <div class="schedule-item math-item">
+                                    <div class="schedule-time">07:00 - 09:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Toán học - Giải tích</h4>
+                                        <p>Hàm số và đạo hàm</p>
+                                    </div>
+                                    <div class="schedule-status done"><i class="fas fa-check"></i></div>
+                                </div>
+                                <div class="schedule-item chemistry-item">
+                                    <div class="schedule-time">09:30 - 11:30</div>
+                                    <div class="schedule-info">
+                                        <h4>Hóa học - Vô cơ</h4>
+                                        <p>Dãy điện hóa kim loại</p>
+                                    </div>
+                                    <div class="schedule-status done"><i class="fas fa-check"></i></div>
+                                </div>
+                                <div class="schedule-item biology-item">
+                                    <div class="schedule-time">14:00 - 16:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Sinh học</h4>
+                                        <p>Quang hợp ở thực vật</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="tue">
+                                <div class="schedule-item math-item">
+                                    <div class="schedule-time">07:00 - 09:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Toán học - Hình học</h4>
+                                        <p>Khoảng cách trong không gian</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                                <div class="schedule-item chemistry-item">
+                                    <div class="schedule-time">14:00 - 16:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Hóa học - Hữu cơ</h4>
+                                        <p>Este và lipit</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="wed">
+                                <div class="schedule-item math-item">
+                                    <div class="schedule-time">07:00 - 09:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Toán học - Đại số</h4>
+                                        <p>Số phức</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                                <div class="schedule-item biology-item">
+                                    <div class="schedule-time">09:30 - 11:30</div>
+                                    <div class="schedule-info">
+                                        <h4>Sinh học</h4>
+                                        <p>Hô hấp tế bào</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="thu">
+                                <div class="schedule-item chemistry-item">
+                                    <div class="schedule-time">07:00 - 09:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Hóa học - Phân tích</h4>
+                                        <p>Nhận biết chất hữu cơ</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                                <div class="schedule-item math-item">
+                                    <div class="schedule-time">14:00 - 16:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Toán học - Xác suất</h4>
+                                        <p>Biến cố và xác suất</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="fri">
+                                <div class="schedule-item biology-item">
+                                    <div class="schedule-time">07:00 - 09:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Sinh học - Di truyền</h4>
+                                        <p>Quy luật Mendel</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                                <div class="schedule-item chemistry-item">
+                                    <div class="schedule-time">09:30 - 11:30</div>
+                                    <div class="schedule-info">
+                                        <h4>Hóa học - Điện phân</h4>
+                                        <p>Điện phân dung dịch</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="sat">
+                                <div class="schedule-item math-item">
+                                    <div class="schedule-time">08:00 - 11:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Toán học - Luyện đề</h4>
+                                        <p>Đề số 1 - THPT QG 2024</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                                <div class="schedule-item biology-item">
+                                    <div class="schedule-time">14:00 - 16:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Sinh học - Sinh thái</h4>
+                                        <p>Quần xã sinh vật</p>
+                                    </div>
+                                    <div class="schedule-status pending"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                            <div class="schedule-day" data-day="sun">
+                                <div class="schedule-item">
+                                    <div class="schedule-time">09:00 - 11:00</div>
+                                    <div class="schedule-info">
+                                        <h4>Ôn tập tổng hợp</h4>
+                                        <p>Tự kiểm tra và củng cố kiến thức</p>
+                                    </div>
+                                    <div class="schedule-status rest"><i class="fas fa-coffee"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Goals Section -->
+                <section id="goals" class="section">
+                    <div class="section-header">
+                        <h1>Mục tiêu</h1>
+                        <p>Đặt mục tiêu và theo dõi tiến độ</p>
+                    </div>
+
+                    <div class="goals-grid">
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <i class="fas fa-bullseye"></i>
+                                <h3>Mục tiêu điểm số</h3>
+                            </div>
+                            <div class="goal-content">
+                                <div class="score-target">
+                                    <div class="target-item">
+                                        <span class="target-subject">Toán</span>
+                                        <span class="target-score">>= 8.0</span>
+                                    </div>
+                                    <div class="target-item">
+                                        <span class="target-subject">Hóa</span>
+                                        <span class="target-score">>= 8.0</span>
+                                    </div>
+                                    <div class="target-item">
+                                        <span class="target-subject">Sinh</span>
+                                        <span class="target-score">>= 8.5</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <i class="fas fa-calendar-check"></i>
+                                <h3>Mục tiêu hàng ngày</h3>
+                            </div>
+                            <div class="goal-content">
+                                <div class="daily-tasks">
+                                    <label class="task-item">
+                                        <input type="checkbox" checked>
+                                        <span>Học Toán 2 tiếng</span>
+                                    </label>
+                                    <label class="task-item">
+                                        <input type="checkbox" checked>
+                                        <span>Học Hóa 2 tiếng</span>
+                                    </label>
+                                    <label class="task-item">
+                                        <input type="checkbox">
+                                        <span>Học Sinh 2 tiếng</span>
+                                    </label>
+                                    <label class="task-item">
+                                        <input type="checkbox" checked>
+                                        <span>Làm 20 câu trắc nghiệm</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="goal-card wide">
+                            <div class="goal-header">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>Tiến độ tổng quan</h3>
+                            </div>
+                            <div class="goal-content">
+                                <div class="overall-progress">
+                                    <div class="progress-chart">
+                                        <div class="chart-segment math-seg" style="--percent: 33%"></div>
+                                        <div class="chart-segment chemistry-seg" style="--percent: 28%"></div>
+                                        <div class="chart-segment biology-seg" style="--percent: 39%"></div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="legend-item">
+                                            <span class="legend-color math"></span>
+                                            <span>Toán học (33%)</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color chemistry"></span>
+                                            <span>Hóa học (28%)</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color biology"></span>
+                                            <span>Sinh học (39%)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Upload Section -->
+                <section id="upload" class="section">
+                    <div class="section-header">
+                        <h1>Upload đề thi</h1>
+                        <p>Tải lên đề (ảnh / TXT). Hệ thống sẽ OCR, tách câu hỏi và phân loại tự động.</p>
+                    </div>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="uploadInput" accept="image/*,.txt" hidden>
+                        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <h3>Kéo thả file vào đây hoặc <span class="link">bấm để chọn</span></h3>
+                        <p>Hỗ trợ: JPG, PNG, WebP, BMP, GIF, TXT – tối đa 10MB</p>
+                    </div>
+                    <div class="upload-progress hidden" id="uploadProgress">
+                        <div class="progress-label" id="progressLabel">Đang xử lý...</div>
+                        <div class="progress-bar-linear"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+                        <div class="progress-percent" id="progressPercent">0%</div>
+                    </div>
+                    <div class="upload-result hidden" id="uploadResult"></div>
+                </section>
+
+                <!-- Exam Repository Section -->
+                <section id="repo" class="section">
+                    <div class="section-header">
+                        <h1>Kho đề chung</h1>
+                        <p>Danh sách đề đã upload bởi tất cả thành viên</p>
+                    </div>
+                    <div class="repo-toolbar">
+                        <input type="text" id="repoSearch" placeholder="Tìm kiếm theo tên file..." class="toolbar-input">
+                        <button class="btn-secondary" id="repoRefresh"><i class="fas fa-sync"></i> Làm mới</button>
+                    </div>
+                    <div class="repo-list" id="repoList"></div>
+                </section>
+
+                <!-- Question Bank Section -->
+                <section id="bank" class="section">
+                    <div class="section-header">
+                        <h1>Ngân hàng câu hỏi</h1>
+                        <p>Câu hỏi đã trích xuất từ đề đã upload</p>
+                    </div>
+                    <div class="bank-filters">
+                        <select id="bankSubject" class="toolbar-input">
+                            <option value="">Tất cả môn</option>
+                            <option value="math">Toán</option>
+                            <option value="chemistry">Hóa</option>
+                            <option value="biology">Sinh</option>
+                        </select>
+                        <select id="bankDifficulty" class="toolbar-input">
+                            <option value="">Mọi độ khó</option>
+                            <option value="easy">Dễ</option>
+                            <option value="medium">Trung bình</option>
+                            <option value="hard">Khó</option>
+                        </select>
+                        <input type="text" id="bankSearch" placeholder="Tìm trong câu hỏi..." class="toolbar-input">
+                    </div>
+                    <div class="bank-stats" id="bankStats"></div>
+                    <div class="bank-list" id="bankList"></div>
+                </section>
+
+                <!-- Chatbot Section -->
+                <section id="chatbot" class="section">
+                    <div class="section-header">
+                        <h1>Trợ lý AI</h1>
+                        <p>Hỏi đáp nhanh về Toán - Hóa - Sinh. Mặc định dùng kho kiến thức cục bộ; cấu hình API key ở Cài đặt để dùng AI như GPT.</p>
+                    </div>
+                    <div class="chatbot-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-msg bot">
+                                <div class="msg-avatar"><i class="fas fa-robot"></i></div>
+                                <div class="msg-bubble">Xin chào! Tôi là trợ lý học tập B00. Bạn cần giúp gì?</div>
+                            </div>
+                        </div>
+                        <form class="chat-input-form" id="chatForm">
+                            <input type="text" id="chatInput" placeholder="Nhập câu hỏi..." maxlength="2000" autocomplete="off">
+                            <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Generate Exam Section -->
+                <section id="generate" class="section">
+                    <div class="section-header">
+                        <h1>Tạo đề tự động</h1>
+                        <p>Tạo bộ đề từ ngân hàng câu hỏi, uưu tiên điểm yếu của bạn</p>
+                    </div>
+                    <div class="generate-form">
+                        <div class="form-row">
+                            <label>Số câu:</label>
+                            <input type="number" id="genCount" value="20" min="5" max="100" class="toolbar-input">
+                        </div>
+                        <div class="form-row">
+                            <label>Môn học:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="math" checked> Toán</label>
+                                <label><input type="checkbox" value="chemistry" checked> Hóa</label>
+                                <label><input type="checkbox" value="biology" checked> Sinh</label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label>Độ khó:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="easy" checked> Dễ</label>
+                                <label><input type="checkbox" value="medium" checked> TB</label>
+                                <label><input type="checkbox" value="hard" checked> Khó</label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label><input type="checkbox" id="genFocusWeak" checked> Ưu tiên tập trung vào điểm yếu của tôi</label>
+                        </div>
+                        <button class="btn-primary" id="btnGenerate"><i class="fas fa-magic"></i> Tạo đề</button>
+                    </div>
+                    <div class="generated-exam" id="generatedExam"></div>
+                </section>
+
+                <!-- Weakness Section -->
+                <section id="weakness" class="section">
+                    <div class="section-header">
+                        <h1>Điểm yếu của tôi</h1>
+                        <p>FastAI ghi nhớ các chủ đề bạn hay nhầm, lần sau ưu tiên ôn lại</p>
+                    </div>
+                    <div class="weakness-summary" id="weaknessSummary"></div>
+                    <div class="weakness-list" id="weaknessList"></div>
+                    <div class="weakness-actions">
+                        <button class="btn-secondary" id="btnClearWeakness"><i class="fas fa-trash"></i> Xóa toàn bộ lịch sử</button>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="section">
+                    <div class="section-header">
+                        <h1>Cài đặt</h1>
+                        <p>Cấu hình AI và bảo mật</p>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-robot"></i> AI nâng cao (tùy chọn)</h3>
+                        <p class="hint">Cấu hình API key OpenAI-compatible để nhận câu trả lời từ GPT/Claude/Gemini. Key được lưu cục bộ trên trình duyệt của bạn.</p>
+                        <div class="form-row">
+                            <label>Endpoint:</label>
+                            <input type="text" id="aiEndpoint" class="toolbar-input" placeholder="https://api.openai.com/v1/chat/completions">
+                        </div>
+                        <div class="form-row">
+                            <label>Model:</label>
+                            <input type="text" id="aiModel" class="toolbar-input" placeholder="gpt-3.5-turbo">
+                        </div>
+                        <div class="form-row">
+                            <label>API Key:</label>
+                            <input type="password" id="aiApiKey" class="toolbar-input" placeholder="sk-..." autocomplete="off">
+                        </div>
+                        <button class="btn-primary" id="btnSaveAI"><i class="fas fa-save"></i> Lưu cấu hình</button>
+                        <button class="btn-secondary" id="btnClearAI"><i class="fas fa-eraser"></i> Xóa API key</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3><i class="fas fa-shield-halved"></i> Bảo mật phiên</h3>
+                        <div id="sessionInfo" class="session-info"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- External libs: Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="storage.js"></script>
+    <script src="classifier.js"></script>
+    <script src="ocr.js"></script>
+    <script src="ai.js"></script>
+    <script src="upload.js"></script>
+    <script src="features.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
