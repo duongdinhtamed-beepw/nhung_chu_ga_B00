@@ -6,10 +6,13 @@ const SHARED_BANK = new StorageModule.SharedStore('b00_question_bank');
 const SHARED_REPO = new StorageModule.SharedStore('b00_exam_repo');
 
 const UPLOAD_LIMITS = {
-    maxFileSize: 10 * 1024 * 1024,  // 10 MB
+    maxFileSize: 20 * 1024 * 1024,  // 20 MB
     allowedTypes: [
         'image/jpeg', 'image/png', 'image/webp', 'image/bmp', 'image/gif',
-        'text/plain'
+        'text/plain',
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword'
     ],
     maxFilenameLen: 200
 };
@@ -23,12 +26,11 @@ function validateFile(file) {
         throw new Error(`File quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB). Giới hạn ${UPLOAD_LIMITS.maxFileSize / 1024 / 1024}MB.`);
     }
     if (!UPLOAD_LIMITS.allowedTypes.includes(file.type)) {
-        throw new Error(`Loại file không hỗ trợ: ${file.type}. Chỉ chấp nhận ảnh (JPG/PNG/WebP) hoặc TXT.`);
+        throw new Error(`Loại file không hỗ trợ: ${file.type}. Chỉ chấp nhận ảnh (JPG/PNG), PDF, Word (.docx/.doc), hoặc TXT.`);
     }
     if (file.name.length > UPLOAD_LIMITS.maxFilenameLen) {
         throw new Error('Tên file quá dài.');
     }
-    // Magic byte check for images (optional light check)
     return true;
 }
 
@@ -47,9 +49,39 @@ async function processUpload(file, uploaderUsername, onProgress) {
     let rawText = '';
     let ocrConfidence = null;
 
-    if (file.type === 'text/plain') {
+    // Handle PDF/Word files via API
+    if (file.type === 'application/pdf' || 
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword') {
+        
+        onProgress?.({ stage: 'uploading', progress: 0.2, label: 'Đang upload file lên server...' });
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('username', uploaderUsername);
+        
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Upload thất bại');
+            }
+            
+            const result = await response.json();
+            rawText = result.rawText;
+            
+            onProgress?.({ stage: 'parsing', progress: 0.5, label: 'Xử lý nội dung...' });
+        } catch (error) {
+            throw new Error(`Lỗi upload: ${error.message}`);
+        }
+    } else if (file.type === 'text/plain') {
         rawText = await file.text();
         rawText = SecurityUtils.sanitizeText(rawText, 1000000);
+        onProgress?.({ stage: 'parsing', progress: 0.5, label: 'Xử lý nội dung...' });
     } else if (file.type.startsWith('image/')) {
         onProgress?.({ stage: 'ocr', progress: 0.1, label: 'Đang OCR (có thể mất 30-60s)...' });
         const result = await OCRModule.ocrFromFile(file, p => {
@@ -61,12 +93,13 @@ async function processUpload(file, uploaderUsername, onProgress) {
         });
         rawText = result.text;
         ocrConfidence = result.confidence;
+        onProgress?.({ stage: 'parsing', progress: 0.85, label: 'Xử lý nội dung...' });
     } else {
-        throw new Error('Loại file chưa được hỗ trợ OCR.');
+        throw new Error('Loại file chưa được hỗ trợ.');
     }
 
     if (!rawText || rawText.trim().length < 10) {
-        throw new Error('Không trích xuất được nội dung từ file. Vui lòng kiểm tra lại hình ảnh.');
+        throw new Error('Không trích xuất được nội dung từ file. Vui lòng kiểm tra lại.');
     }
 
     onProgress?.({ stage: 'extract', progress: 0.85, label: 'Trích xuất câu hỏi...' });
