@@ -8,19 +8,19 @@
     <meta name="robots" content="noindex, nofollow">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <title>B00 Study Hub - Ôn Thi Toán - Hóa - Sinh</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Auth guard: runs before rendering any content -->
-    <script src="security.js"></script>
-    <script src="auth.js"></script>
+    <script src="/security.js"></script>
+    <script src="/auth.js"></script>
     <script>
         // Block page if not logged in (runs immediately)
         (async function authGuard() {
             const session = await AuthModule.verifySession();
             if (!session) {
                 document.documentElement.style.display = 'none';
-                location.replace('login.html');
+                location.replace('/login.html');
             }
         })();
     </script>
@@ -691,13 +691,13 @@
                 <section id="upload" class="section">
                     <div class="section-header">
                         <h1>Upload đề thi</h1>
-                        <p>Tải lên đề (ảnh / TXT). Hệ thống sẽ OCR, tách câu hỏi và phân loại tự động.</p>
+                        <p>Tải lên đề (ảnh, PDF, Word, TXT). Hệ thống sẽ tự động xử lý, tách câu hỏi và phân loại.</p>
                     </div>
                     <div class="upload-zone" id="uploadZone">
-                        <input type="file" id="uploadInput" accept="image/*,.txt" hidden>
+                        <input type="file" id="uploadInput" accept="image/*,.txt,.pdf,.docx,.doc" hidden>
                         <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                         <h3>Kéo thả file vào đây hoặc <span class="link">bấm để chọn</span></h3>
-                        <p>Hỗ trợ: JPG, PNG, WebP, BMP, GIF, TXT – tối đa 10MB</p>
+                        <p>Hỗ trợ: JPG, PNG, WebP, BMP, GIF, TXT, PDF, Word (.docx/.doc) – tối đa 20MB</p>
                     </div>
                     <div class="upload-progress hidden" id="uploadProgress">
                         <div class="progress-label" id="progressLabel">Đang xử lý...</div>
@@ -851,13 +851,13 @@
 
     <!-- External libs: Tesseract.js for OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="storage.js"></script>
-    <script src="classifier.js"></script>
-    <script src="ocr.js"></script>
-    <script src="ai.js"></script>
-    <script src="upload.js"></script>
-    <script src="features.js"></script>
-    <script src="script.js"></script>
+    <script src="/storage.js"></script>
+    <script src="/classifier.js"></script>
+    <script src="/ocr.js"></script>
+    <script src="/ai.js"></script>
+    <script src="/upload.js"></script>
+    <script src="/features.js"></script>
+    <script src="/script.js"></script>
 </body>
 </html>
 
