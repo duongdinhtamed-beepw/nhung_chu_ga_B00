@@ -9,13 +9,38 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/gate',
   '/favicon.ico',
   '/robots.txt',
-  '/sitemap.xml'
+  '/sitemap.xml',
+  '/index.html',
+  '/login.html'
+];
+
+const PUBLIC_FILE_EXTENSIONS = [
+  '.css',
+  '.js',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.bmp',
+  '.gif',
+  '.svg',
+  '.ico',
+  '.json',
+  '.txt',
+  '.html',
+  '.woff2',
+  '.woff',
+  '.ttf',
+  '.eot'
 ];
 
 export function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  if (PUBLIC_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+  if (
+    PUBLIC_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
+    PUBLIC_FILE_EXTENSIONS.some((ext) => pathname.endsWith(ext))
+  ) {
     return NextResponse.next();
   }
 
