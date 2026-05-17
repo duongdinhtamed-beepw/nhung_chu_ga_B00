@@ -9,6 +9,10 @@
     let currentSession = null;
     let currentUserStore = null;
     let currentWeaknessTracker = null;
+    let currentGeneratedExam = null;
+    let currentExamAnswers = {};
+    let currentExamTimer = null;
+    let currentExamEndsAt = null;
 
     // Toast
     function toast(msg, type = 'info') {
@@ -271,15 +275,8 @@
                 const res = await AIModule.chatbotAsk(q, { userStore: currentUserStore });
                 typing.remove();
                 appendMsg(msgs, res.answer, 'bot', false, res.source);
-                // heuristic: if user asked about a known topic, track it (maybe wrong answer -> weakness)
-                const cls = ClassifierModule.classifySubject(q);
-                if (cls.subject !== 'unknown') {
-                    await currentWeaknessTracker.addMistake({
-                        subject: cls.subject,
-                        topic: extractTopic(q),
-                        difficulty: ClassifierModule.classifyDifficulty(q)
-                    });
-                }
+                // Asking a question is not the same as answering incorrectly.
+                // Weaknesses should only be recorded from quiz/exam attempts.
             } catch (err) {
                 typing.remove();
                 appendMsg(msgs, 'Lỗi: ' + err.message, 'bot');
@@ -327,11 +324,28 @@
 
     // ========== GENERATE EXAM ==========
     function setupGenerate() {
-        const btn = document.getElementById('btnGenerate');
-        btn?.addEventListener('click', async () => {
-            const count = parseInt(document.getElementById('genCount').value) || 20;
-            const subjects = Array.from(document.querySelectorAll('#generate .checkbox-group')[0].querySelectorAll('input:checked')).map(i => i.value);
-            const difficulties = Array.from(document.querySelectorAll('#generate .checkbox-group')[1].querySelectorAll('input:checked')).map(i => i.value);
+        const practiceForm = document.getElementById('practiceGenerateForm');
+        const officialForm = document.getElementById('officialGenerateForm');
+        const tabs = document.querySelectorAll('.generate-tab');
+        const practiceBtn = document.getElementById('btnGeneratePractice');
+        const officialBtn = document.getElementById('btnGenerateOfficial');
+        const submitBtn = document.getElementById('btnSubmitExam');
+        const resetBtn = document.getElementById('btnResetExam');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const mode = tab.dataset.generateMode;
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                practiceForm?.classList.toggle('hidden', mode !== 'practice');
+                officialForm?.classList.toggle('hidden', mode !== 'official');
+            });
+        });
+
+        practiceBtn?.addEventListener('click', async () => {
+            const count = Math.min(50, Math.max(5, parseInt(document.getElementById('genCount').value) || 20));
+            const subjects = Array.from(document.querySelectorAll('#practiceGenerateForm .checkbox-group')[0].querySelectorAll('input:checked')).map(i => i.value);
+            const difficulties = Array.from(document.querySelectorAll('#practiceGenerateForm .checkbox-group')[1].querySelectorAll('input:checked')).map(i => i.value);
             const focusWeak = document.getElementById('genFocusWeak').checked;
             const bank = UploadModule.getQuestionBank();
             if (bank.length === 0) {
@@ -339,34 +353,203 @@
                 return;
             }
             let weaknessKeys = [];
-            if (focusWeak) {
-                weaknessKeys = await AIModule.deriveFocusTopicsFromWeakness(currentUserStore);
+            if (focusWeak) weaknessKeys = await AIModule.deriveFocusTopicsFromWeakness(currentUserStore);
+            const exam = ExamEngine.generatePracticeExam({ bank, count, subjects, difficulties, weaknessKeys });
+            renderExam(exam);
+            toast(`Đã tạo đề ôn luyện ${exam.questions.length} câu.`, 'success');
+        });
+
+        officialBtn?.addEventListener('click', () => {
+            const bank = UploadModule.getQuestionBank();
+            const subject = document.getElementById('officialSubject')?.value || 'math';
+            const exam = ExamEngine.generateOfficialExam({ bank, subject });
+            if (!exam.questions.length) {
+                toast('Chưa có đủ câu hỏi cho môn đã chọn. Hãy upload hoặc seed thêm dữ liệu.', 'error');
+                return;
             }
-            const exam = AIModule.generateExam({ bank, count, subjects, difficulties, weaknessKeys });
-            renderExam(exam, { focusWeak, weaknessKeys });
+            renderExam(exam);
+            startExamTimer(exam.durationMinutes);
+            toast(`Đã tạo ${exam.title}.`, 'success');
+        });
+
+        submitBtn?.addEventListener('click', submitCurrentExam);
+        resetBtn?.addEventListener('click', () => {
+            clearExamTimer();
+            currentGeneratedExam = null;
+            currentExamAnswers = {};
+            document.getElementById('generatedExam').innerHTML = '';
+            document.getElementById('examActions')?.classList.add('hidden');
         });
     }
 
-    function renderExam(exam, opts) {
+    function renderExam(exam) {
         const el = document.getElementById('generatedExam');
+        const actions = document.getElementById('examActions');
+        clearExamTimer();
+        currentGeneratedExam = exam;
+        currentExamAnswers = {};
         el.innerHTML = '';
+
         const header = document.createElement('div');
         header.className = 'exam-header';
-        header.textContent = `Đã tạo đề gồm ${exam.length} câu${opts.focusWeak && opts.weaknessKeys.length ? ' (ưu tiên điểm yếu: ' + opts.weaknessKeys.slice(0, 5).join(', ') + ')' : ''}`;
+        header.textContent = `${exam.title} • ${exam.commandCount} lệnh hỏi${exam.durationMinutes ? ' • ' + exam.durationMinutes + ' phút' : ''}`;
         el.appendChild(header);
-        exam.forEach((q, i) => {
-            const item = document.createElement('div');
-            item.className = 'bank-item';
-            const text = document.createElement('div');
-            text.className = 'bank-item-text';
-            text.textContent = `Câu ${i + 1}: ${q.text.slice(0, 400)}`;
-            const subjTag = document.createElement('span');
-            subjTag.className = `tag ${q.subject}`;
-            subjTag.textContent = q.subject === 'math' ? 'Toán' : (q.subject === 'chemistry' ? 'Hóa' : 'Sinh');
-            item.appendChild(text);
-            item.appendChild(subjTag);
-            el.appendChild(item);
+
+        if (exam.sections?.length) {
+            let index = 1;
+            exam.sections.forEach(section => {
+                const sectionTitle = document.createElement('h3');
+                sectionTitle.className = 'exam-section-title';
+                sectionTitle.textContent = section.label;
+                el.appendChild(sectionTitle);
+                section.questions.forEach(q => {
+                    el.appendChild(renderQuestion(q, index));
+                    index++;
+                });
+            });
+        } else {
+            exam.questions.forEach((q, i) => el.appendChild(renderQuestion(q, i + 1)));
+        }
+
+        actions?.classList.remove('hidden');
+    }
+
+    function renderQuestion(q, index) {
+        const item = document.createElement('div');
+        item.className = `exam-question ${q.type}`;
+        const meta = document.createElement('div');
+        meta.className = 'exam-question-meta';
+        meta.textContent = `Câu ${index} • ${ExamEngine.SUBJECT_NAMES[q.subject] || q.subject} • ${q.topic}`;
+        const text = document.createElement('div');
+        text.className = 'exam-question-text';
+        text.textContent = q.text;
+        item.appendChild(meta);
+        item.appendChild(text);
+
+        if (q.imageUrl) {
+            const img = document.createElement('img');
+            img.className = 'exam-question-image';
+            img.src = q.imageUrl;
+            img.alt = 'Hình minh họa cho câu hỏi';
+            item.appendChild(img);
+        }
+
+        if (q.type === 'mcq') renderMcq(item, q);
+        if (q.type === 'truefalse') renderTrueFalse(item, q);
+        if (q.type === 'short') renderShort(item, q);
+
+        const solution = document.createElement('details');
+        solution.className = 'exam-solution';
+        const summary = document.createElement('summary');
+        summary.textContent = 'Xem gợi ý và lời giải chi tiết';
+        solution.appendChild(summary);
+        const list = document.createElement('ol');
+        q.explanation.forEach(step => {
+            const li = document.createElement('li');
+            li.textContent = step;
+            list.appendChild(li);
         });
+        solution.appendChild(list);
+        item.appendChild(solution);
+        return item;
+    }
+
+    function renderMcq(container, q) {
+        const options = document.createElement('div');
+        options.className = 'answer-options';
+        q.options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'answer-option';
+            btn.textContent = `${option.key}. ${option.text}`;
+            btn.addEventListener('click', () => {
+                currentExamAnswers[q.id] = option.key;
+                options.querySelectorAll('.answer-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+            options.appendChild(btn);
+        });
+        container.appendChild(options);
+    }
+
+    function renderTrueFalse(container, q) {
+        const statements = document.createElement('div');
+        statements.className = 'tf-list';
+        q.statements.forEach(statement => {
+            const row = document.createElement('div');
+            row.className = 'tf-row';
+            const text = document.createElement('div');
+            text.textContent = `${statement.key}) ${statement.text}`;
+            const controls = document.createElement('div');
+            controls.className = 'tf-controls';
+            [['Đúng', true], ['Sai', false]].forEach(([label, value]) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'answer-option small';
+                btn.textContent = label;
+                btn.addEventListener('click', () => {
+                    currentExamAnswers[`${q.id}_${statement.key}`] = value;
+                    controls.querySelectorAll('.answer-option').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                });
+                controls.appendChild(btn);
+            });
+            row.appendChild(text);
+            row.appendChild(controls);
+            statements.appendChild(row);
+        });
+        container.appendChild(statements);
+    }
+
+    function renderShort(container, q) {
+        const input = document.createElement('input');
+        input.className = 'toolbar-input short-answer-input';
+        input.placeholder = 'Nhập đáp án ngắn';
+        input.addEventListener('input', () => {
+            currentExamAnswers[q.id] = input.value;
+        });
+        container.appendChild(input);
+    }
+
+    function submitCurrentExam() {
+        if (!currentGeneratedExam) return;
+        const result = ExamEngine.scoreExam(currentGeneratedExam, currentExamAnswers);
+        clearExamTimer();
+        const el = document.getElementById('generatedExam');
+        const summary = document.createElement('div');
+        summary.className = 'exam-score';
+        summary.textContent = `Kết quả: ${result.correct}/${result.total} lệnh hỏi đúng • Điểm quy đổi: ${result.score10}/10`;
+        el.prepend(summary);
+        toast('Đã chấm bài. Mở từng lời giải để xem chi tiết.', 'success');
+    }
+
+    function startExamTimer(minutes) {
+        clearExamTimer();
+        if (!minutes) return;
+        currentExamEndsAt = Date.now() + minutes * 60 * 1000;
+        currentExamTimer = setInterval(updateExamTimer, 1000);
+        updateExamTimer();
+    }
+
+    function clearExamTimer() {
+        if (currentExamTimer) clearInterval(currentExamTimer);
+        currentExamTimer = null;
+        currentExamEndsAt = null;
+        const timer = document.getElementById('examTimer');
+        if (timer) timer.textContent = '';
+    }
+
+    function updateExamTimer() {
+        const timer = document.getElementById('examTimer');
+        if (!timer || !currentExamEndsAt) return;
+        const remain = Math.max(0, currentExamEndsAt - Date.now());
+        const mins = Math.floor(remain / 60000);
+        const secs = Math.floor((remain % 60000) / 1000);
+        timer.textContent = `Còn lại ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        if (remain <= 0) {
+            clearExamTimer();
+            submitCurrentExam();
+        }
     }
 
     // ========== WEAKNESS ==========

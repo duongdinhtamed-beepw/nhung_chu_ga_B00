@@ -771,10 +771,14 @@
                         <h1>Tạo đề tự động</h1>
                         <p>Tạo bộ đề từ ngân hàng câu hỏi, uưu tiên điểm yếu của bạn</p>
                     </div>
-                    <div class="generate-form">
+                    <div class="generate-tabs" role="tablist" aria-label="Chế độ tạo đề">
+                        <button class="generate-tab active" type="button" data-generate-mode="practice">Ôn luyện</button>
+                        <button class="generate-tab" type="button" data-generate-mode="official">Đề thi thật</button>
+                    </div>
+                    <div class="generate-form" id="practiceGenerateForm">
                         <div class="form-row">
                             <label>Số câu:</label>
-                            <input type="number" id="genCount" value="20" min="5" max="100" class="toolbar-input">
+                            <input type="number" id="genCount" value="20" min="5" max="50" class="toolbar-input">
                         </div>
                         <div class="form-row">
                             <label>Môn học:</label>
@@ -793,9 +797,26 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <label><input type="checkbox" id="genFocusWeak" checked> Ưu tiên tập trung vào điểm yếu của tôi</label>
+                            <label><input type="checkbox" id="genFocusWeak" checked> Ưu tiên điểm yếu thật của tôi</label>
                         </div>
-                        <button class="btn-primary" id="btnGenerate"><i class="fas fa-magic"></i> Tạo đề</button>
+                        <button class="btn-primary" id="btnGeneratePractice"><i class="fas fa-magic"></i> Tạo đề ôn luyện</button>
+                    </div>
+                    <div class="generate-form hidden" id="officialGenerateForm">
+                        <div class="form-row">
+                            <label>Môn thi:</label>
+                            <select id="officialSubject" class="toolbar-input">
+                                <option value="math">Toán - 90 phút - 34 lệnh hỏi</option>
+                                <option value="chemistry">Hóa học - 50 phút - 40 lệnh hỏi</option>
+                                <option value="biology">Sinh học - 50 phút - 40 lệnh hỏi</option>
+                            </select>
+                        </div>
+                        <p class="hint">Mô phỏng cấu trúc trắc nghiệm từ năm 2025 của Bộ GDĐT: nhiều lựa chọn, đúng/sai và trả lời ngắn.</p>
+                        <button class="btn-primary" id="btnGenerateOfficial"><i class="fas fa-file-circle-check"></i> Tạo đề thi thật</button>
+                    </div>
+                    <div class="exam-actions hidden" id="examActions">
+                        <div class="exam-timer" id="examTimer"></div>
+                        <button class="btn-primary" id="btnSubmitExam"><i class="fas fa-check"></i> Nộp bài</button>
+                        <button class="btn-secondary" id="btnResetExam"><i class="fas fa-rotate-right"></i> Làm đề khác</button>
                     </div>
                     <div class="generated-exam" id="generatedExam"></div>
                 </section>
@@ -853,9 +874,11 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="/storage.js"></script>
     <script src="/classifier.js"></script>
+    <script src="/seed-exams.js"></script>
     <script src="/ocr.js"></script>
     <script src="/ai.js"></script>
     <script src="/upload.js"></script>
+    <script src="/exam-engine.js"></script>
     <script src="/features.js"></script>
     <script src="/script.js"></script>
 </body>

@@ -48,6 +48,7 @@ async function processUpload(file, uploaderUsername, onProgress) {
 
     let rawText = '';
     let ocrConfidence = null;
+    let sourceImageUrl = null;
 
     // Handle PDF/Word files via API
     if (file.type === 'application/pdf' || 
@@ -83,6 +84,9 @@ async function processUpload(file, uploaderUsername, onProgress) {
         rawText = SecurityUtils.sanitizeText(rawText, 1000000);
         onProgress?.({ stage: 'parsing', progress: 0.5, label: 'Xử lý nội dung...' });
     } else if (file.type.startsWith('image/')) {
+        if (file.size <= 2 * 1024 * 1024 && OCRModule.readFileAsDataURL) {
+            sourceImageUrl = await OCRModule.readFileAsDataURL(file);
+        }
         onProgress?.({ stage: 'ocr', progress: 0.1, label: 'Đang OCR (có thể mất 30-60s)...' });
         const result = await OCRModule.ocrFromFile(file, p => {
             onProgress?.({
@@ -104,21 +108,25 @@ async function processUpload(file, uploaderUsername, onProgress) {
 
     onProgress?.({ stage: 'extract', progress: 0.85, label: 'Trích xuất câu hỏi...' });
     const rawQuestions = ClassifierModule.extractQuestions(rawText);
+    const examId = crypto.randomUUID();
 
     onProgress?.({ stage: 'classify', progress: 0.92, label: 'Phân loại câu hỏi...' });
-    const classified = rawQuestions.map(q => {
+    const classified = rawQuestions.map((q, index) => {
         const cleanQ = SecurityUtils.sanitizeText(q, 3000);
         const subjRes = ClassifierModule.classifySubject(cleanQ);
         const difficulty = ClassifierModule.classifyDifficulty(cleanQ);
         return {
             id: crypto.randomUUID(),
+            examId,
+            order: index + 1,
             text: cleanQ,
             subject: subjRes.subject,
             subjectConfidence: subjRes.confidence,
             difficulty,
             uploadedBy: uploaderUsername,
             uploadedAt: Date.now(),
-            sourceFile: SecurityUtils.sanitizeFilename(file.name)
+            sourceFile: SecurityUtils.sanitizeFilename(file.name),
+            imageUrl: sourceImageUrl
         };
     });
 
@@ -126,7 +134,7 @@ async function processUpload(file, uploaderUsername, onProgress) {
 
     // Save exam metadata to shared repo
     const examMeta = {
-        id: crypto.randomUUID(),
+        id: examId,
         filename: SecurityUtils.sanitizeFilename(file.name),
         size: file.size,
         type: file.type,
@@ -135,7 +143,8 @@ async function processUpload(file, uploaderUsername, onProgress) {
         questionCount: classified.length,
         classifiedCount: valid.length,
         ocrConfidence,
-        rawTextPreview: rawText.slice(0, 500)
+        rawTextPreview: rawText.slice(0, 500),
+        imageUrl: sourceImageUrl
     };
     SHARED_REPO.push(examMeta);
 
@@ -180,7 +189,7 @@ function deleteExam(examId, requesterUsername, requesterRole) {
     // Remove exam and its associated questions
     SHARED_REPO.set(repo.filter(e => e.id !== examId));
     const bank = SHARED_BANK.get([]);
-    SHARED_BANK.set(bank.filter(q => q.sourceFile !== exam.filename || q.uploadedAt !== exam.uploadedAt));
+    SHARED_BANK.set(bank.filter(q => q.examId !== exam.id));
     return true;
 }
 

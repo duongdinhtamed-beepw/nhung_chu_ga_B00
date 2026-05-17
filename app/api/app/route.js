@@ -8,11 +8,15 @@ export async function GET(req) {
   const secret = process.env.GATE_COOKIE_SECRET || '';
   const cookie = req.cookies.get(GATE_COOKIE_NAME)?.value;
   
-  if (secret && cookie) {
-    const { ok } = verifyGateCookieValue(secret, cookie);
-    if (!ok) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!secret) {
+    return NextResponse.json(
+      { error: 'Server chưa cấu hình GATE_COOKIE_SECRET' },
+      { status: 500 }
+    );
+  }
+
+  if (!cookie || !verifyGateCookieValue(secret, cookie).ok) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
